@@ -19,7 +19,7 @@ RULES:
 """
 
 class EnterpriseRAGEngine:
-    """Complete Enterprise RAG Pipeline uniting Hybrid Search, FlashRank Reranker, and Nemotron LLM."""
+    """Complete Enterprise RAG Pipeline uniting Hybrid Search, Cohere Reranker, and Mistral AI LLM."""
 
     def __init__(self):
         self.vector_store = vector_store

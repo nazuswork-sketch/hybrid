@@ -4,7 +4,9 @@ from typing import List, Dict, Any, Generator
 from openai import OpenAI
 from src.config import settings
 
-class NemotronLLMClient:
+class MistralLLMClient:
+    """Enterprise LLM Client powered by Mistral AI API with retry, streaming, and token tracking."""
+
     def __init__(
         self,
         api_key: str = None,
@@ -18,22 +20,31 @@ class NemotronLLMClient:
 
     @property
     def api_key(self) -> str:
-        return self._api_key or settings.OPENROUTER_API_KEY
+        return self._api_key or settings.MISTRAL_API_KEY or settings.OPENROUTER_API_KEY
 
     @property
     def model(self) -> str:
-        return self._model or settings.OPENROUTER_MODEL
+        if self._model:
+            return self._model
+        if settings.MISTRAL_API_KEY:
+            return settings.MISTRAL_MODEL
+        return settings.OPENROUTER_MODEL
 
     @property
     def base_url(self) -> str:
-        return self._base_url or settings.OPENROUTER_BASE_URL
+        if self._base_url:
+            return self._base_url
+        if settings.MISTRAL_API_KEY:
+            return settings.MISTRAL_BASE_URL
+        return settings.OPENROUTER_BASE_URL
 
     @property
     def client(self) -> OpenAI:
         key = self.api_key or "sk-dummy-key"
-        if self._client is None or getattr(self._client, "api_key", "") != key:
+        base = self.base_url
+        if self._client is None or getattr(self._client, "api_key", "") != key or getattr(self._client, "base_url", "") != base:
             self._client = OpenAI(
-                base_url=self.base_url,
+                base_url=base,
                 api_key=key,
                 default_headers={
                     "HTTP-Referer": "http://localhost:8501",
@@ -132,4 +143,7 @@ class NemotronLLMClient:
         except Exception as e:
             yield f"⚠️ [Streaming Error: {e}]"
 
-llm_client = NemotronLLMClient()
+# Backward compatibility alias
+NemotronLLMClient = MistralLLMClient
+
+llm_client = MistralLLMClient()

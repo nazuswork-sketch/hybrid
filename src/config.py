@@ -33,6 +33,29 @@ class Settings:
         
     EMBEDDING_DIM: int = 3072
     
+    # Mistral AI API Configuration (LLM Generator)
+    @property
+    def MISTRAL_API_KEY(self) -> str:
+        return get_secret('MISTRAL_API_KEY', '')
+
+    @property
+    def MISTRAL_MODEL(self) -> str:
+        return get_secret('MISTRAL_MODEL', 'mistral-medium-2508')
+
+    @property
+    def MISTRAL_BASE_URL(self) -> str:
+        return get_secret('MISTRAL_BASE_URL', 'https://api.mistral.ai/v1')
+
+    # Cohere API Configuration (Cross-Encoder Reranker)
+    @property
+    def COHERE_API_KEY(self) -> str:
+        return get_secret('COHERE_API_KEY', '')
+
+    @property
+    def COHERE_RERANK_MODEL(self) -> str:
+        return get_secret('COHERE_RERANK_MODEL', 'rerank-v3.5')
+
+    # OpenRouter API Configuration (Legacy / Fallback)
     @property
     def OPENROUTER_API_KEY(self) -> str:
         return get_secret('OPENROUTER_API_KEY', '')

@@ -2,6 +2,8 @@
 .env
 .env.local
 .env.*
+!.env.example
+
 
 # Python Cache & Bytecode
 __pycache__/
@@ -26,7 +28,14 @@ synthetic_eval_report.json
 # Arize Phoenix tracing db
 .phoenix/
 
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
 # OS artifacts
 .DS_Store
 __MACOSX/
 Thumbs.db
+

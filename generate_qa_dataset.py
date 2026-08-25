@@ -61,7 +61,7 @@ def generate_qa_from_pdfs(
 ):
     print("=" * 70)
     print("🚀 GENERATING MULTI-HOP Q&A DATASET FROM PDF DOCUMENTS")
-    print(f"🤖 Model: {settings.OPENROUTER_MODEL}")
+    print(f"🤖 Model: {llm_client.model}")
     print(f"📁 Source Directory: {data_dir}")
     print("=" * 70)
 
@@ -96,7 +96,7 @@ def generate_qa_from_pdfs(
         step = max(1, len(combined_sections) // num_sections_per_pdf)
         selected_sections = [combined_sections[i] for i in range(0, len(combined_sections), step)][:num_sections_per_pdf]
 
-        print(f"   Feeding {len(selected_sections)} multi-paragraph sections to OpenRouter...")
+        print(f"   Feeding {len(selected_sections)} multi-paragraph sections to {llm_client.model}...")
 
         for s_idx, section_text in enumerate(selected_sections):
             prompt = PROMPT_TEMPLATE + section_text[:4000] + '\n"""\n'

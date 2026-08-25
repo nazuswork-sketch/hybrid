@@ -79,18 +79,34 @@ Generated Answer:
             # Handle potential JSON substrings within raw response
             if "{" in content and "}" in content:
                 json_str = content[content.find("{"):content.rfind("}") + 1]
-                scores = json.loads(json_str)
+                scores = json.loads(json_str, strict=False)
             else:
-                scores = json.loads(content)
+                scores = json.loads(content, strict=False)
         except Exception as e:
-            eval_status = "PARSE_ERROR"
-            scores = {
-                "faithfulness": 0.0,
-                "context_precision": 0.0,
-                "context_recall": 0.0,
-                "answer_relevancy": 0.0,
-                "reasoning": f"Judge parsing failed ({e}). Raw response: {content[:120]}..."
-            }
+            # Fallback regex extraction for scores
+            import re
+            f_match = re.search(r'"faithfulness"\s*:\s*([0-9.]+)', content)
+            p_match = re.search(r'"context_precision"\s*:\s*([0-9.]+)', content)
+            r_match = re.search(r'"context_recall"\s*:\s*([0-9.]+)', content)
+            a_match = re.search(r'"answer_relevancy"\s*:\s*([0-9.]+)', content)
+            
+            if f_match and p_match and r_match and a_match:
+                scores = {
+                    "faithfulness": float(f_match.group(1)),
+                    "context_precision": float(p_match.group(1)),
+                    "context_recall": float(r_match.group(1)),
+                    "answer_relevancy": float(a_match.group(1)),
+                    "reasoning": "Extracted via robust regex parser."
+                }
+            else:
+                eval_status = "PARSE_ERROR"
+                scores = {
+                    "faithfulness": 0.0,
+                    "context_precision": 0.0,
+                    "context_recall": 0.0,
+                    "answer_relevancy": 0.0,
+                    "reasoning": f"Judge parsing failed ({e}). Raw response: {content[:120]}..."
+                }
             
         return {
             "question": question,

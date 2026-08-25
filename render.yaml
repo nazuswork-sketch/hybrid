@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: enterprise-rag-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: GEMINI_API_KEY
+
+        sync: false
+      - key: GEMINI_EMBEDDING_MODEL
+        value: models/gemini-embedding-2
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: MISTRAL_MODEL
+        value: mistral-medium-2508
+      - key: MISTRAL_BASE_URL
+        value: https://api.mistral.ai/v1
+      - key: COHERE_API_KEY
+        sync: false
+      - key: COHERE_RERANK_MODEL
+        value: rerank-v3.5
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: QDRANT_COLLECTION_NAME
+        value: enterprise_knowledge_base

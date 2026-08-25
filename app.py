@@ -30,9 +30,12 @@ st.set_page_config(
 # Start / check observability
 phoenix_url = get_phoenix_url()
 
-# Custom CSS for modern enterprise look
+# Custom CSS for modern enterprise look & smooth autoscrolling
 st.markdown("""
 <style>
+    html, body, [data-testid="stVerticalBlockBorderWrapper"], [data-testid="stAppViewContainer"] {
+        scroll-behavior: smooth !important;
+    }
     .main-header {
         font-size: 2.2rem;
         font-weight: 700;
@@ -70,8 +73,10 @@ with st.sidebar:
     st.markdown("### ⚙️ System Components")
     
     st.markdown(f"**🧠 Embedding Model:**  \n`{settings.GEMINI_EMBEDDING_MODEL}` (3072 dims)")
-    st.markdown(f"**⚡ LLM Generator:**  \n`{settings.OPENROUTER_MODEL}`")
-    st.markdown(f"**🎯 Cross-Encoder Reranker:**  \n`FlashRank (Local ONNX)`")
+    llm_name = f"Mistral AI (`{settings.MISTRAL_MODEL}`)" if settings.MISTRAL_API_KEY else f"OpenRouter (`{settings.OPENROUTER_MODEL}`)"
+    st.markdown(f"**⚡ LLM Generator:**  \n{llm_name}")
+    rerank_name = f"Cohere Rerank (`{settings.COHERE_RERANK_MODEL}`)" if settings.COHERE_API_KEY else "FlashRank (Local ONNX)"
+    st.markdown(f"**🎯 Cross-Encoder Reranker:**  \n{rerank_name}")
     db_label = "Qdrant Cloud (AWS)" if settings.QDRANT_URL else "Embedded Qdrant (Local)"
     st.markdown(f"**🗄️ Vector DB:**  \n`{db_label}`")
     st.markdown(f"**🔍 Sparse Index:**  \n`BM25 Okapi Hybrid Fusion`")
@@ -115,83 +120,89 @@ with tab_chat:
     if col3.button("L&D Stipend & AI API Credits"):
         sample_q = "How much is the annual learning and development stipend and can it be used for AI API credits?"
 
-    # Display chat history
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-            if "sources" in msg and msg["sources"]:
-                with st.expander(f"📚 View {len(msg['sources'])} Grounded Sources & Citations"):
-                    for idx, s in enumerate(msg["sources"]):
-                        page_tag = f" | **Page:** `{s['page']}`" if s.get('page') else ""
-                        sec_tag = f" | **Section:** `{s['section_id']}`" if s.get('section_id') is not None else ""
-                        chan_tag = f" | **Channel:** `#{s['channel']}`" if s.get('channel') else ""
-                        st.markdown(f"""
-                        **[{idx+1}] Document:** `{s['source']}`{page_tag}{sec_tag}{chan_tag}  
-                        *Retrieval Confidence:* Rerank: `{s['rerank_score']}` | Hybrid: `{s['hybrid_score']}` | Type: `{s.get('doc_type', 'doc')}`  
-                        > {s['full_text']}
-                        """)
-                        if s.get("image_base64"):
-                            try:
-                                raw_img = base64.b64decode(s["image_base64"])
-                                st.image(raw_img, caption=f"📸 {s.get('image_name', 'Visual Asset')} (Source: {s['source']})", use_container_width=True)
-                            except Exception:
-                                pass
-            if "telemetry" in msg:
-                t = msg["telemetry"]
-                st.caption(f"⚡ Total Latency: **{t.get('total_latency')}s** | 🔍 Retrieval: **{t.get('retrieval_latency')}s** | 🎯 Rerank: **{t.get('rerank_latency')}s** | 🤖 LLM: **{t.get('llm_latency')}s** | 🪙 Tokens: **{t.get('tokens')}**")
+    # Fixed-height scrollable container for chat history (automatically locks scroll to bottom)
+    chat_container = st.container(height=520)
 
-    # Handle user query
+    # Display chat history inside the independent scrolling container
+    with chat_container:
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+                if "sources" in msg and msg["sources"]:
+                    with st.expander(f"📚 View {len(msg['sources'])} Grounded Sources & Citations"):
+                        for idx, s in enumerate(msg["sources"]):
+                            page_tag = f" | **Page:** `{s['page']}`" if s.get('page') else ""
+                            sec_tag = f" | **Section:** `{s['section_id']}`" if s.get('section_id') is not None else ""
+                            chan_tag = f" | **Channel:** `#{s['channel']}`" if s.get('channel') else ""
+                            st.markdown(f"""
+                            **[{idx+1}] Document:** `{s['source']}`{page_tag}{sec_tag}{chan_tag}  
+                            *Retrieval Confidence:* Rerank: `{s['rerank_score']}` | Hybrid: `{s['hybrid_score']}` | Type: `{s.get('doc_type', 'doc')}`  
+                            > {s['full_text']}
+                            """)
+                            if s.get("image_base64"):
+                                try:
+                                    raw_img = base64.b64decode(s["image_base64"])
+                                    st.image(raw_img, caption=f"📸 {s.get('image_name', 'Visual Asset')} (Source: {s['source']})", use_container_width=True)
+                                except Exception:
+                                    pass
+                if "telemetry" in msg:
+                    t = msg["telemetry"]
+                    st.caption(f"⚡ Total Latency: **{t.get('total_latency')}s** | 🔍 Retrieval: **{t.get('retrieval_latency')}s** | 🎯 Rerank: **{t.get('rerank_latency')}s** | 🤖 LLM: **{t.get('llm_latency')}s** | 🪙 Tokens: **{t.get('tokens')}**")
+
+    # Chat input placed outside/at bottom of the fixed-height container
     user_input = st.chat_input("Ask a question about internal enterprise policies, code standards, or diagrams...")
     prompt = sample_q or user_input
 
     if prompt:
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        with chat_container:
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-        with st.chat_message("assistant"):
-            with st.spinner("Retrieving hybrid contexts & reranking with FlashRank..."):
-                result = rag_engine.query(prompt)
+            with st.chat_message("assistant"):
+                with st.spinner("Retrieving hybrid contexts & reranking with Cohere..."):
+                    result = rag_engine.query(prompt)
+                    
+                if result.get("is_error"):
+                    st.error(result["answer"])
+                else:
+                    st.markdown(result["answer"])
                 
-            if result.get("is_error"):
-                st.error(result["answer"])
-            else:
-                st.markdown(result["answer"])
-            
-            if result.get("sources"):
-                with st.expander(f"📚 View {len(result['sources'])} Grounded Sources & Citations"):
-                    for idx, s in enumerate(result["sources"]):
-                        page_tag = f" | **Page:** `{s['page']}`" if s.get('page') else ""
-                        sec_tag = f" | **Section:** `{s['section_id']}`" if s.get('section_id') is not None else ""
-                        chan_tag = f" | **Channel:** `#{s['channel']}`" if s.get('channel') else ""
-                        st.markdown(f"""
-                        **[{idx+1}] Document:** `{s['source']}`{page_tag}{sec_tag}{chan_tag}  
-                        *Retrieval Confidence:* Rerank: `{s['rerank_score']}` | Hybrid: `{s['hybrid_score']}` | Type: `{s.get('doc_type', 'doc')}`  
-                        > {s['full_text']}
-                        """)
-                        if s.get("image_base64"):
-                            try:
-                                raw_img = base64.b64decode(s["image_base64"])
-                                st.image(raw_img, caption=f"📸 {s.get('image_name', 'Visual Asset')} (Source: {s['source']})", use_container_width=True)
-                            except Exception:
-                                pass
-                        
-            telemetry = {
-                "total_latency": result["total_latency_seconds"],
-                "retrieval_latency": result["retrieval_metadata"]["retrieval_latency"],
-                "rerank_latency": result["retrieval_metadata"]["rerank_latency"],
-                "llm_latency": result["generation_metadata"]["latency_seconds"],
-                "tokens": result["generation_metadata"]["total_tokens"]
-            }
-            
-            st.caption(f"⚡ Total Latency: **{telemetry['total_latency']}s** | 🔍 Retrieval: **{telemetry['retrieval_latency']}s** | 🎯 Rerank: **{telemetry['rerank_latency']}s** | 🤖 LLM: **{telemetry['llm_latency']}s** | 🪙 Tokens: **{telemetry['tokens']}**")
-            
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": result["answer"],
-                "sources": result["sources"],
-                "telemetry": telemetry
-            })
+                if result.get("sources"):
+                    with st.expander(f"📚 View {len(result['sources'])} Grounded Sources & Citations"):
+                        for idx, s in enumerate(result["sources"]):
+                            page_tag = f" | **Page:** `{s['page']}`" if s.get('page') else ""
+                            sec_tag = f" | **Section:** `{s['section_id']}`" if s.get('section_id') is not None else ""
+                            chan_tag = f" | **Channel:** `#{s['channel']}`" if s.get('channel') else ""
+                            st.markdown(f"""
+                            **[{idx+1}] Document:** `{s['source']}`{page_tag}{sec_tag}{chan_tag}  
+                            *Retrieval Confidence:* Rerank: `{s['rerank_score']}` | Hybrid: `{s['hybrid_score']}` | Type: `{s.get('doc_type', 'doc')}`  
+                            > {s['full_text']}
+                            """)
+                            if s.get("image_base64"):
+                                try:
+                                    raw_img = base64.b64decode(s["image_base64"])
+                                    st.image(raw_img, caption=f"📸 {s.get('image_name', 'Visual Asset')} (Source: {s['source']})", use_container_width=True)
+                                except Exception:
+                                    pass
+                            
+                telemetry = {
+                    "total_latency": result["total_latency_seconds"],
+                    "retrieval_latency": result["retrieval_metadata"]["retrieval_latency"],
+                    "rerank_latency": result["retrieval_metadata"]["rerank_latency"],
+                    "llm_latency": result["generation_metadata"]["latency_seconds"],
+                    "tokens": result["generation_metadata"]["total_tokens"]
+                }
+                
+                st.caption(f"⚡ Total Latency: **{telemetry['total_latency']}s** | 🔍 Retrieval: **{telemetry['retrieval_latency']}s** | 🎯 Rerank: **{telemetry['rerank_latency']}s** | 🤖 LLM: **{telemetry['llm_latency']}s** | 🪙 Tokens: **{telemetry['tokens']}**")
+                
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": result["answer"],
+                    "sources": result["sources"],
+                    "telemetry": telemetry
+                })
+        st.rerun()
 
 # ----------------- TAB 2: INGESTION & KNOWLEDGE BASE -----------------
 with tab_docs:
@@ -303,10 +314,10 @@ with tab_arch:
     * **Reciprocal Rank Fusion (RRF)**: Fuses dense semantic scores with sparse keyword ranks.
 
     #### 3. Cross-Encoder Reranker
-    * **FlashRank**: Runs locally via ONNX (`ms-marco-TinyBERT-L-2-v2`). Re-ranks Top-K hybrid candidates to Top-N most relevant passages and visual assets.
+    * **Cohere Rerank API (`rerank-v3.5`)**: High-precision semantic cross-encoder reranker with zero-Docker local `FlashRank` (`ms-marco-TinyBERT-L-2-v2`) fallback. Re-ranks Top-K hybrid candidates to Top-N most relevant passages and visual assets.
 
     #### 4. Generation & Grounding
-    * **LLM**: OpenRouter **`nvidia/nemotron-3.5-lightning:free`**.
+    * **LLM**: Mistral AI **`mistral-medium-2508`** (with OpenRouter fallback).
     * **Grounding & Citation Directives**: Strict system prompt enforcing human-readable document, page, and section citations with inline visual asset rendering.
 
     #### 5. Evaluation & Observability
