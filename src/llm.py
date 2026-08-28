@@ -47,7 +47,7 @@ class MistralLLMClient:
                 base_url=base,
                 api_key=key,
                 default_headers={
-                    "HTTP-Referer": "http://localhost:8501",
+                    "HTTP-Referer": "http://localhost:5173",
                     "X-Title": "Enterprise RAG Assistant"
                 }
             )

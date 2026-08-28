@@ -12,7 +12,7 @@
 
 An enterprise-grade Retrieval-Augmented Generation (RAG) system built to answer employee questions across heterogeneous internal knowledge bases (PDFs, Markdown runbooks, Slack message threads, and visual architectural diagrams) with **strict citation grounding**, **automated CI/CD evaluation**, and **full-trace OpenInference observability**.
 
-Operates in both **Decoupled Production Mode** (FastAPI backend on Render + React 19/TS frontend on Vercel) and **Local Monolithic Mode** (Streamlit dashboard), running **100% Python with Zero-Docker local embedded support**.
+Operates as a high-performance decoupled architecture (**FastAPI** backend on Render + **React 19 / TypeScript** frontend on Vercel), running **100% Python with Zero-Docker local embedded support**.
 
 ---
 
@@ -106,7 +106,6 @@ flowchart TD
 ```
 project1sv/
 ├── api.py                            # FastAPI ASGI backend server (REST API for Render/production)
-├── app.py                            # Monolithic Streamlit interactive dashboard (local UI & demo)
 ├── ingest.py                         # Offline document parsing, chunking, and indexing pipeline
 ├── run_eval.py                       # Automated CI/CD evaluation runner with threshold verification
 ├── run_phoenix.py                    # Standalone Arize Phoenix observability server launcher
@@ -236,10 +235,6 @@ This will:
 
 ### 4. Launch the Applications
 
-You can run either the **Decoupled Production Stack** (FastAPI + React) or the **All-in-One Streamlit Dashboard**.
-
-#### Option A: Decoupled Stack (Recommended)
-
 **1. Start the FastAPI Backend:**
 ```bash
 uvicorn api:app --reload --port 8000
@@ -255,14 +250,6 @@ npm install
 npm run dev
 ```
 - Web Application: `http://localhost:5173`
-
-#### Option B: Monolithic Streamlit Dashboard
-
-```bash
-streamlit run app.py
-```
-- Interactive UI available at: `http://localhost:8501`
-- Includes live querying, drag-and-drop document ingestion, benchmark execution, and architecture visualization.
 
 ---
 

@@ -32,7 +32,7 @@ class GeminiEmbeddingClient:
     def _get_urls(self, model: str):
         key = self.api_key
         if not key:
-            raise ValueError("GEMINI_API_KEY is not set. Please add it to your Streamlit Cloud Secrets (in TOML format) or .env file.")
+            raise ValueError("GEMINI_API_KEY is not set. Please add it to your environment or .env file.")
         if not model.startswith("models/"):
             model = f"models/{model}"
         single_url = f"https://generativelanguage.googleapis.com/v1beta/{model}:embedContent?key={key}"

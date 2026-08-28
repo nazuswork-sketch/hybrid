@@ -6,17 +6,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(dotenv_path=BASE_DIR / '.env', override=True)
 
 def get_secret(key: str, default: str = "") -> str:
-    """Retrieve secrets prioritizing os.environ, .env, and Streamlit Secrets (st.secrets)."""
-    val = os.getenv(key)
-    if val:
-        return val
-    try:
-        import streamlit as st
-        if hasattr(st, "secrets") and key in st.secrets:
-            return str(st.secrets[key])
-    except Exception:
-        pass
-    return default
+    """Retrieve configuration secrets prioritizing os.environ and .env."""
+    return os.getenv(key, default)
 
 class Settings:
     BASE_DIR: Path = BASE_DIR

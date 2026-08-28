@@ -9,7 +9,7 @@ Core: LlamaIndex or LangChain, OpenAI/Anthropic API (or local Llama 3).
 Vector DB: Qdrant or Weaviate.
 Evaluation: RAGAS or DeepEval (to measure faithfulness, context precision).
 Observability: LangSmith, Arize Phoenix, or Langfuse.
-Backend/Frontend: FastAPI, Streamlit or Next.js.
+Backend/Frontend: FastAPI, React 19 + TypeScript (Vite).
 
 Key "Applied" Features to Highlight:
 Implement Hybrid Search (Keyword + Vector) and Reranking (e.g., Cohere Rerank or BGE-Reranker) to improve retrieval accuracy.
