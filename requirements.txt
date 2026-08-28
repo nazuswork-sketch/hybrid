@@ -1,31 +1,23 @@
-# Core LLM & Embeddings
-openai>=1.30.0
-google-genai>=0.1.0
-google-generativeai>=0.8.0
-python-dotenv>=1.0.0
+# Web Interface & Backend REST API (Render / Production)
+fastapi>=0.110.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
 pydantic>=2.0.0
+python-dotenv>=1.0.0
 
-# Vector Database & Retrieval (Zero-Docker Embedded)
+# Core LLM & Generation
+openai>=1.30.0
+
+# Vector Database & Hybrid Retrieval (Zero-Docker Embedded / Cloud)
 qdrant-client>=1.9.0
 rank-bm25>=0.2.2
 cohere>=7.0.0
 flashrank>=0.2.8
 
-# Document Parsing & Chunking (Multimodal Text & Images)
+# Document Parsing & Multimodal Image Processing
 pypdf>=4.0.0
 Pillow>=10.0.0
 tiktoken>=0.7.0
 
-# Evaluation & Golden Dataset Benchmarking
-ragas>=0.1.9
-datasets>=2.19.0
+# Evaluation & Benchmark
 pandas>=2.0.0
-
-# Observability & Tracing (Zero-Docker In-Memory / Local Web UI)
-arize-phoenix>=4.0.0
-openinference-instrumentation-openai>=0.1.0
-
-# Web Interface & Backend REST API (Render / Production)
-fastapi>=0.110.0
-uvicorn[standard]>=0.30.0
-python-multipart>=0.0.9

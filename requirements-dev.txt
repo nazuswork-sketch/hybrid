@@ -1,0 +1,4 @@
+# Optional local development & observability tools
+-r requirements.txt
+arize-phoenix==20.3.0
+openinference-instrumentation-openai==0.1.54
